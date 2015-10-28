@@ -1,5 +1,6 @@
 package com.example.android.bestmovies;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -10,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.GridView;
 
 import org.json.JSONArray;
@@ -30,6 +32,7 @@ import java.util.List;
 public class MovieGridFragment extends Fragment {
     private static final String LOG_CAT = MovieGridFragment.class.getSimpleName();
     private MovieAdapter movieAdapter;
+    private ArrayList<MovieThumbnailFlavor> movieFlavorList;
 
     public MovieGridFragment() {
     }
@@ -41,19 +44,20 @@ public class MovieGridFragment extends Fragment {
 
         ArrayList<MovieThumbnailFlavor> thumbnailFlavorArrayList = new ArrayList<>();
 
-//        for (int i=0; i<6; i++) {
-//            thumbnailFlavorArrayList.add(new MovieThumbnailFlavor (
-//                    "http://image.tmdb.org/t/p/w300/z3nGs7UED9XlqUkgWeT4jQ80m1N.jpg",
-//                    "", "", "", ""));
-//            thumbnailFlavorArrayList.add(new MovieThumbnailFlavor(
-//                    "http://www.hollywoodreporter.com/sites/default/files/custom/Blog_Images/avengers-movie-poster-1.jpg",
-//                    "","", "", ""));
-//        }
-
         movieAdapter = new MovieAdapter(getActivity(), thumbnailFlavorArrayList);
 
         GridView movieGrid = (GridView) rootView.findViewById(R.id.movie_gridview);
         movieGrid.setAdapter(movieAdapter);
+
+        movieGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MovieThumbnailFlavor movieDetails = movieFlavorList.get(position);
+                Intent detailedMovieActivity = new Intent(getActivity(), DetailedMovieActivity.class);
+                detailedMovieActivity.putExtra("movieDetails", movieDetails);
+                startActivity(detailedMovieActivity);
+            }
+        });
 
         return rootView;
     }
@@ -121,6 +125,7 @@ public class MovieGridFragment extends Fragment {
 
         @Override
         protected void onPostExecute(ArrayList<MovieThumbnailFlavor> movieThumbnailFlavors) {
+            movieFlavorList = movieThumbnailFlavors;
             movieAdapter.clear();
             for (MovieThumbnailFlavor thumb : movieThumbnailFlavors) {
                 movieAdapter.add(thumb);
