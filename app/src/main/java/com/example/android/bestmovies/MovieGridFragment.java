@@ -30,7 +30,7 @@ public class MovieGridFragment extends Fragment {
 
         for (int i=0; i<12; i++) {
             thumbnailFlavorArrayList.add(new MovieThumbnailFlavor ("randomID",
-                    "http://90ie.ru/wp-content/uploads/2009/05/scary-movie.thumbnail.jpg"));
+                    "http://www.hollywoodreporter.com/sites/default/files/custom/Blog_Images/avengers-movie-poster-1.jpg"));
         }
 
         movieAdapter = new MovieAdapter(getActivity(), thumbnailFlavorArrayList);
