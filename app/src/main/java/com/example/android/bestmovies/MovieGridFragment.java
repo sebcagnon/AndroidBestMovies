@@ -1,8 +1,10 @@
 package com.example.android.bestmovies;
 
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -63,23 +65,27 @@ public class MovieGridFragment extends Fragment {
     }
 
     /**
-     * calls the AsymcTask to fetch movies and populate the grid
+     * calls the AsyncTask to fetch movies and populate the grid
      */
     public void updateMovieList() {
-        new FetchMovieInfo().execute();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String sortBy = prefs.getString(getString(R.string.pref_search_key),
+                getString(R.string.pref_search_default));
+
+        new FetchMovieInfo().execute(sortBy);
     }
 
-    private class FetchMovieInfo extends AsyncTask<Void, Void, ArrayList<MovieThumbnailFlavor>> {
+    private class FetchMovieInfo extends AsyncTask<String, Void, ArrayList<MovieThumbnailFlavor>> {
 
         @Override
-        protected ArrayList<MovieThumbnailFlavor> doInBackground(Void... params) {
+        protected ArrayList<MovieThumbnailFlavor> doInBackground(String... params) {
             Uri.Builder builder = new Uri.Builder();
             builder.scheme("https")
                     .authority("api.themoviedb.org")
                     .appendPath("3")
                     .appendPath("discover")
                     .appendPath("movie")
-                    .appendQueryParameter("sort_by", "popularity.desc")
+                    .appendQueryParameter("sort_by", params[0])
                     .appendQueryParameter("api_key", Constants.MOVIEDB_API_KEY);
             String targetUrl = builder.build().toString();
 
