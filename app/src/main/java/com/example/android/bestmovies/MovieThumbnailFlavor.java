@@ -4,12 +4,18 @@ package com.example.android.bestmovies;
  * Created by Sebastien Cagnon on 10/28/15.
  */
 public class MovieThumbnailFlavor {
-    // Used to retrieve movie info via API
-    String movieId;
     String thumbnailURL;
+    String title;
+    String releaseDate;
+    String voteAvg;
+    String desc;
 
-    public MovieThumbnailFlavor(String movieId, String thumbnailURL) {
-        this.movieId = movieId;
+    public MovieThumbnailFlavor(String thumbnailURL, String title,
+                                String releaseDate, String voteAvg, String desc) {
         this.thumbnailURL = thumbnailURL;
+        this.title = title;
+        this.releaseDate = releaseDate;
+        this.voteAvg = voteAvg;
+        this.desc = desc;
     }
 }

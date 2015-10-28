@@ -10,7 +10,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,10 +39,14 @@ public class MovieGridFragment extends Fragment {
 
         ArrayList<MovieThumbnailFlavor> thumbnailFlavorArrayList = new ArrayList<>();
 
-        for (int i=0; i<12; i++) {
-            thumbnailFlavorArrayList.add(new MovieThumbnailFlavor ("randomID",
-                    "http://www.hollywoodreporter.com/sites/default/files/custom/Blog_Images/avengers-movie-poster-1.jpg"));
-        }
+//        for (int i=0; i<6; i++) {
+//            thumbnailFlavorArrayList.add(new MovieThumbnailFlavor (
+//                    "http://image.tmdb.org/t/p/w300/z3nGs7UED9XlqUkgWeT4jQ80m1N.jpg",
+//                    "", "", "", ""));
+//            thumbnailFlavorArrayList.add(new MovieThumbnailFlavor(
+//                    "http://www.hollywoodreporter.com/sites/default/files/custom/Blog_Images/avengers-movie-poster-1.jpg",
+//                    "","", "", ""));
+//        }
 
         movieAdapter = new MovieAdapter(getActivity(), thumbnailFlavorArrayList);
 
@@ -63,10 +69,10 @@ public class MovieGridFragment extends Fragment {
         new FetchMovieInfo().execute();
     }
 
-    private class FetchMovieInfo extends AsyncTask<Void, Void, MovieThumbnailFlavor[]> {
+    private class FetchMovieInfo extends AsyncTask<Void, Void, ArrayList<MovieThumbnailFlavor>> {
 
         @Override
-        protected MovieThumbnailFlavor[] doInBackground(Void... params) {
+        protected ArrayList<MovieThumbnailFlavor> doInBackground(Void... params) {
             Uri.Builder builder = new Uri.Builder();
             builder.scheme("https")
                     .authority("api.themoviedb.org")
@@ -91,7 +97,6 @@ public class MovieGridFragment extends Fragment {
                     return null;
                 }
                 movieListJSON = convertStreamToString(inputStream);
-                Log.d(LOG_CAT, movieListJSON);
                 try {
                     return getMovieThumbnailListFromJSON(movieListJSON);
                 } catch (JSONException e) {
@@ -106,6 +111,15 @@ public class MovieGridFragment extends Fragment {
                     urlConnection.disconnect();
                 }
             }
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<MovieThumbnailFlavor> movieThumbnailFlavors) {
+            movieAdapter.clear();
+            for (MovieThumbnailFlavor thumb : movieThumbnailFlavors) {
+                movieAdapter.add(thumb);
+            }
+            movieAdapter.notifyDataSetChanged();
         }
 
         /**
@@ -124,9 +138,47 @@ public class MovieGridFragment extends Fragment {
          * @return A list of movies formatted as nice MovieThumbnailFlavor
          * @throws JSONException
          */
-        private MovieThumbnailFlavor[] getMovieThumbnailListFromJSON(String movieDataJSON)
+        private ArrayList<MovieThumbnailFlavor> getMovieThumbnailListFromJSON(String movieDataJSON)
             throws JSONException {
-            return null;
+            final String MDB_LIST = "results";
+            final String MDB_POSTER = "poster_path";
+            final String MDB_TITLE = "title";
+            final String MDB_RELEASE = "release_date";
+            final String MDB_VOTE_AVG = "vote_average";
+            final String MDB_DESC = "overview";
+
+            JSONArray movieList = (new JSONObject(movieDataJSON)).getJSONArray(MDB_LIST);
+
+            ArrayList<MovieThumbnailFlavor> movieThumbnailFlavors = new ArrayList<>(movieList.length());
+
+            for (int i=0; i<movieList.length(); i++) {
+                JSONObject movieObject = movieList.getJSONObject(i);
+                movieThumbnailFlavors.add(i, new MovieThumbnailFlavor(
+                                createImageUrl(movieObject.getString(MDB_POSTER)),
+                                movieObject.getString(MDB_TITLE),
+                                movieObject.getString(MDB_RELEASE),
+                                movieObject.getString(MDB_VOTE_AVG),
+                                movieObject.getString(MDB_DESC)
+                        )
+                );
+            }
+
+            return movieThumbnailFlavors;
+        }
+
+        /**
+         * Creates the url to the poster image
+         * @param posterPath the poster_path parameter from the JSON response
+         * @return a fully formatted URL ready to be used by Picasso
+         */
+        private String createImageUrl(String posterPath) {
+            return new Uri.Builder().scheme("http")
+                    .authority("image.tmdb.org")
+                    .appendPath("t")
+                    .appendPath("p")
+                    .appendPath("w500") // size of image
+                    .appendPath(posterPath.substring(1))
+                    .build().toString();
         }
     }
 }
