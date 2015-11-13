@@ -187,7 +187,7 @@ public class MovieGridFragment extends Fragment {
                     .authority("image.tmdb.org")
                     .appendPath("t")
                     .appendPath("p")
-                    .appendPath("w500") // size of image
+                    .appendPath("w185") // size of image
                     .appendPath(posterPath.substring(1))
                     .build().toString();
         }
