@@ -20,3 +20,7 @@ public class Constants {
 ```
 
 The file is already added to .gitignore
+
+# Credits
+
+App Icon [by Itzik Gur on iconarchive.com](http://www.iconarchive.com/show/my-seven-icons-by-itzikgur/Movies-Oscar-icon.html)
