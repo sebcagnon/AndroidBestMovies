@@ -31,7 +31,8 @@ public class DetailedMovieFragment extends Fragment {
             ((TextView)rootView.findViewById(R.id.release_textview)).setText(movieDetails.releaseDate);
             ((TextView)rootView.findViewById(R.id.score_textview)).setText(movieDetails.voteAvg);
             ImageView imageView = (ImageView) rootView.findViewById(R.id.poster_imageview);
-            Picasso.with(getContext()).load(movieDetails.thumbnailURL).into(imageView);
+            Picasso.with(getContext()).load(movieDetails.thumbnailURL)
+                    .placeholder(R.drawable.placeholder).into(imageView);
             ((TextView)rootView.findViewById(R.id.desc_textview)).setText(movieDetails.desc);
         }
 

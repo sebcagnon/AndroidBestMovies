@@ -36,7 +36,8 @@ public class MovieAdapter extends ArrayAdapter<MovieThumbnailFlavor> {
         }
 
         ImageView imageView = (ImageView) convertView.findViewById(R.id.grid_item_thumbnail_imageview);
-        Picasso.with(getContext()).load(flavor.thumbnailURL).into(imageView);
+        Picasso.with(getContext()).load(flavor.thumbnailURL)
+                .placeholder(R.drawable.placeholder).into(imageView);
 
         return convertView;
     }
