@@ -11,7 +11,6 @@ import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.GridView;
 
 import com.example.android.bestmovies.database.MoviesContract;
@@ -23,6 +22,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     private static final String LOG_CAT = MovieGridFragment.class.getSimpleName();
     private MovieGridAdapter movieGridAdapter;
     private static final int GRID_LOADER_ID = 1;
+    private static String mSortPref;
 
     public MovieGridFragment() {
     }
@@ -54,6 +54,16 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     public void onActivityCreated(Bundle savedInstanceState) {
         getLoaderManager().initLoader(GRID_LOADER_ID, null, this);
         super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        String newSortOrder = Utility.getSortPreference(getContext());
+        if (!newSortOrder.equals(mSortPref)) {
+            getLoaderManager().restartLoader(GRID_LOADER_ID, null, this);
+            mSortPref = newSortOrder;
+        }
     }
 
     @Override
