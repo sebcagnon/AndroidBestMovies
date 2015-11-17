@@ -11,6 +11,7 @@ import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.GridView;
 
 import com.example.android.bestmovies.database.MoviesContract;
@@ -37,15 +38,16 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         GridView movieGrid = (GridView) rootView.findViewById(R.id.movie_gridview);
         movieGrid.setAdapter(movieGridAdapter);
 
-//        movieGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                MovieThumbnailFlavor movieDetails = movieFlavorList.get(position);
-//                Intent detailedMovieActivity = new Intent(getActivity(), DetailedMovieActivity.class);
-//                detailedMovieActivity.putExtra("movieDetails", movieDetails);
-//                startActivity(detailedMovieActivity);
-//            }
-//        });
+        movieGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MovieGridAdapter.ViewHolder viewHolder = (MovieGridAdapter.ViewHolder)view.getTag();
+                long movieId = viewHolder.id;
+                Intent detailedMovieActivity = new Intent(getActivity(), DetailedMovieActivity.class);
+                detailedMovieActivity.putExtra("movieId", movieId);
+                startActivity(detailedMovieActivity);
+            }
+        });
 
         return rootView;
     }
