@@ -26,6 +26,15 @@ import java.net.URL;
 public final class MovieProvider extends ContentProvider {
     private static final String LOG_CAT = ContentProvider.class.getSimpleName();
 
+    private static final String[] defaultMoveProjection = new String[] {
+                MoviesContract.MovieEntry._ID,
+                MoviesContract.MovieEntry.COLUMN_MOVIE_ID,
+                MoviesContract.MovieEntry.COLUMN_MOVIE_TITLE,
+                MoviesContract.MovieEntry.COLUMN_RELEASE,
+                MoviesContract.MovieEntry.COLUMN_SCORE,
+                MoviesContract.MovieEntry.COLUMN_POSTER_URI,
+                MoviesContract.MovieEntry.COLUMN_DESC};
+
     @Override
     public boolean onCreate() {
         return true;
@@ -38,11 +47,11 @@ public final class MovieProvider extends ContentProvider {
         Cursor retCursor;
         switch (sUriMatcher.match(uri)){
             case MOVIE: {
-                retCursor = getMoviesList(sortOrder);
+                retCursor = getMoviesList(projection, sortOrder);
                 return retCursor;
             }
             case MOVIE_ID: {
-                retCursor = getMovieDetailsOnline(uri);
+                retCursor = getMovieDetailsOnline(projection, uri);
                 return retCursor;
             }
             default:
@@ -75,9 +84,9 @@ public final class MovieProvider extends ContentProvider {
         final int code = sUriMatcher.match(uri);
         switch (code) {
             case MOVIE:
-                return MoviesContract.CONTENT_TYPE;
+                return MoviesContract.MovieEntry.CONTENT_TYPE;
             case MOVIE_ID:
-                return MoviesContract.CONTENT_ITEM_TYPE;
+                return MoviesContract.MovieEntry.CONTENT_ITEM_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown Uri: " + uri);
         }
@@ -99,8 +108,8 @@ public final class MovieProvider extends ContentProvider {
         return 0;
     }
 
-    private Cursor getMoviesList(String sortOrder) {
-        String targetUrl = MoviesContract.MOVIE_SEARCH_URL.buildUpon()
+    private Cursor getMoviesList(String[] projection, String sortOrder) {
+        String targetUrl = MoviesContract.MovieEntry.MOVIE_SEARCH_URL.buildUpon()
                 .appendQueryParameter("sort_by", sortOrder)
                 .appendQueryParameter("api_key", Constants.MOVIEDB_API_KEY).build().toString();
         HttpURLConnection urlConnection = null;
@@ -118,7 +127,7 @@ public final class MovieProvider extends ContentProvider {
             }
             movieListJSON = convertStreamToString(inputStream);
             try {
-                return getMovieListCursorFromJSON(movieListJSON);
+                return getMovieListCursorFromJSON(projection, movieListJSON);
             } catch (JSONException e) {
                 Log.e(LOG_CAT, "JSON Conversion Error: " + e.toString(), e);
                 return null;
@@ -139,24 +148,32 @@ public final class MovieProvider extends ContentProvider {
      * @return Cursor containing {"_id", "movieId", "posterUrl"}
      * @throws JSONException
      */
-    private Cursor getMovieListCursorFromJSON(String movieDataJSON) throws JSONException {
+    private Cursor getMovieListCursorFromJSON(String[] projection, String movieDataJSON)
+            throws JSONException {
+        if (projection==null) {
+            projection = defaultMoveProjection;
+        }
         final String MDB_LIST = "results";
-        final String MDB_POSTER = "poster_path";
-        final String MDB_ID = "id";
 
         JSONArray movieList = (new JSONObject(movieDataJSON)).getJSONArray(MDB_LIST);
 
         MatrixCursor cursor = new MatrixCursor(
-                new String[] {"_id", "movieId", "posterUri"},
+                projection,
                 movieList.length());
 
         for (int i=0; i<movieList.length(); i++) {
             JSONObject movieObject = movieList.getJSONObject(i);
-            cursor.addRow(new Object[]{
-                    i,
-                    movieObject.getLong(MDB_ID),
-                    MoviesContract.createImageUrl(movieObject.getString(MDB_POSTER))
-            });
+            MatrixCursor.RowBuilder rowBuilder = cursor.newRow();
+            for (String s: projection) {
+                if (s.equals(MoviesContract.MovieEntry._ID)) {
+                    rowBuilder.add(i); //for CursorAdapters
+                } else if (s.equals(MoviesContract.MovieEntry.COLUMN_POSTER_URI)){
+                    rowBuilder.add(MoviesContract.MovieEntry.createImageUrl(
+                            movieObject.getString(s)));
+                } else {
+                    rowBuilder.add(movieObject.get(s));
+                }
+            }
         }
 
         return cursor;
@@ -172,9 +189,9 @@ public final class MovieProvider extends ContentProvider {
         return s.hasNext() ? s.next() : "";
     }
 
-    private Cursor getMovieDetailsOnline(Uri uri) {
+    private Cursor getMovieDetailsOnline(String[] projection, Uri uri) {
         long id = MoviesContract.getIdFromUri(uri);
-        String targetUrl = MoviesContract.MOVIE_ID_URL.buildUpon()
+        String targetUrl = MoviesContract.MovieEntry.MOVIE_ID_URL.buildUpon()
                 .appendPath(Long.toString(id))
                 .appendQueryParameter("api_key", Constants.MOVIEDB_API_KEY)
                 .build().toString();
@@ -194,7 +211,7 @@ public final class MovieProvider extends ContentProvider {
             }
             movieListJSON = convertStreamToString(inputStream);
             try {
-                return getMovieCursorFromJSON(movieListJSON);
+                return getMovieCursorFromJSON(projection, movieListJSON);
             } catch (JSONException e) {
                 Log.e(LOG_CAT, "JSON Conversion Error: " + e.toString(), e);
                 return null;
@@ -209,23 +226,24 @@ public final class MovieProvider extends ContentProvider {
         }
     }
 
-    private Cursor getMovieCursorFromJSON(String JSONData) throws JSONException {
-        final String MDB_TITLE = "title";
-        final String MDB_RELEASE = "release_date";
-        final String MDB_VOTES = "vote_average";
-        final String MDB_POSTER = "poster_path";
-        final String MDB_DESC = "overview";
+    private Cursor getMovieCursorFromJSON(String[] projection, String JSONData)
+            throws JSONException {
+        if (projection==null) {
+            projection = defaultMoveProjection;
+        }
         JSONObject object = new JSONObject(JSONData);
-        MatrixCursor cursor = new MatrixCursor(new String[] {
-                "title", "release", "votes", "posterUri", "desc"
-        });
-        cursor.addRow(new Object[] {
-                object.getString(MDB_TITLE),
-                object.getString(MDB_RELEASE),
-                object.getDouble(MDB_VOTES),
-                MoviesContract.createImageUrl(object.getString(MDB_POSTER)),
-                object.getString(MDB_DESC)
-        });
+
+        MatrixCursor cursor = new MatrixCursor(projection);
+        MatrixCursor.RowBuilder rowBuilder = cursor.newRow();
+        for (String s: projection) {
+            if (s.equals(MoviesContract.MovieEntry._ID)) {
+                rowBuilder.add(-1); //not from DB
+            } else if (s.equals(MoviesContract.MovieEntry.COLUMN_POSTER_URI)){
+                rowBuilder.add(MoviesContract.MovieEntry.createImageUrl(object.getString(s)));
+            } else {
+                rowBuilder.add(object.get(s));
+            }
+        }
         return cursor;
     }
 }

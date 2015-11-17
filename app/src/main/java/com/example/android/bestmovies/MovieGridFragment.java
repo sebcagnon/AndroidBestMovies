@@ -25,6 +25,15 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     private static final int GRID_LOADER_ID = 1;
     private static String mSortPref;
 
+    private static final String[] projection = new String[] {
+            MoviesContract.MovieEntry._ID,
+            MoviesContract.MovieEntry.COLUMN_MOVIE_ID,
+            MoviesContract.MovieEntry.COLUMN_POSTER_URI
+    };
+    public static final int MOVIE_ID_COLUMN = 0;
+    public static final int MOVIE_API_ID_COLUMN = 1;
+    public static final int MOVIE_POSTER_URI_COLUMN = 2;
+
     public MovieGridFragment() {
     }
 
@@ -71,8 +80,8 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         final String sortPref = Utility.getSortPreference(getContext());
-        final Uri movieListUri = MoviesContract.CONTENT_URI;
-        return new CursorLoader(getContext(), movieListUri, null, null, null, sortPref);
+        final Uri movieListUri = MoviesContract.MovieEntry.CONTENT_URI;
+        return new CursorLoader(getContext(), movieListUri, projection, null, null, sortPref);
     }
 
     @Override

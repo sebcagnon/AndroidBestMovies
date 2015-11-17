@@ -30,10 +30,9 @@ public class MovieGridAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder viewHolder = (ViewHolder)view.getTag();
-        int imageColumnIndex = cursor.getColumnIndex("posterUri");
-        Picasso.with(context).load(cursor.getString(imageColumnIndex))
+        Picasso.with(context).load(cursor.getString(MovieGridFragment.MOVIE_POSTER_URI_COLUMN))
                 .placeholder(R.drawable.placeholder).into(viewHolder.posterView);
-        viewHolder.id = cursor.getLong(cursor.getColumnIndex("movieId"));
+        viewHolder.id = cursor.getLong(MovieGridFragment.MOVIE_API_ID_COLUMN);
     }
 
 

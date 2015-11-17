@@ -32,6 +32,19 @@ public class DetailedMovieFragment extends Fragment
     private static ImageView posterImageView;
     private static TextView descTextView;
 
+    private static final String[] projection = new String[] {
+            MoviesContract.MovieEntry.COLUMN_MOVIE_TITLE,
+            MoviesContract.MovieEntry.COLUMN_RELEASE,
+            MoviesContract.MovieEntry.COLUMN_SCORE,
+            MoviesContract.MovieEntry.COLUMN_POSTER_URI,
+            MoviesContract.MovieEntry.COLUMN_DESC
+    };
+    public static final int MOVIE_TITLE_COLUMN = 0;
+    public static final int MOVIE_RELEASE_COLUMN = 1;
+    public static final int MOVIE_SCORE_COLUMN = 2;
+    public static final int MOVIE_POSTER_COLUMN = 3;
+    public static final int MOVIE_DESC_COLUMN = 4;
+
     public DetailedMovieFragment() {
     }
 
@@ -59,20 +72,19 @@ public class DetailedMovieFragment extends Fragment
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        final Uri movieDetailsUri = MoviesContract.buildMovieIdUri(movieId);
-        return new CursorLoader(getContext(), movieDetailsUri, null, null, null, null);
+        final Uri movieDetailsUri = MoviesContract.MovieEntry.buildMovieIdUri(movieId);
+        return new CursorLoader(getContext(), movieDetailsUri, projection, null, null, null);
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         if (data!=null && data.moveToFirst()) {
-            titleTextView.setText(data.getString(data.getColumnIndex("title")));
-            releaseTextView.setText(data.getString(data.getColumnIndex("release")));
-            scoreTextView.setText(data.getString(data.getColumnIndex("votes")));
-            int imageColumn = data.getColumnIndex("posterUri");
-            Picasso.with(getContext()).load(data.getString(imageColumn))
+            titleTextView.setText(data.getString(MOVIE_TITLE_COLUMN));
+            releaseTextView.setText(data.getString(MOVIE_RELEASE_COLUMN));
+            scoreTextView.setText(data.getString(MOVIE_SCORE_COLUMN));
+            Picasso.with(getContext()).load(data.getString(MOVIE_POSTER_COLUMN))
                     .placeholder(R.drawable.placeholder).into(posterImageView);
-            descTextView.setText(data.getString(data.getColumnIndex("desc")));
+            descTextView.setText(data.getString(MOVIE_DESC_COLUMN));
         }
     }
 
