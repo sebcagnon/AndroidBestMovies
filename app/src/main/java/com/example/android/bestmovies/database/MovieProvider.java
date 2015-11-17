@@ -143,10 +143,6 @@ public final class MovieProvider extends ContentProvider {
         final String MDB_LIST = "results";
         final String MDB_POSTER = "poster_path";
         final String MDB_ID = "id";
-        final String MDB_TITLE = "title";
-        final String MDB_RELEASE = "release_date";
-        final String MDB_VOTE_AVG = "vote_average";
-        final String MDB_DESC = "overview";
 
         JSONArray movieList = (new JSONObject(movieDataJSON)).getJSONArray(MDB_LIST);
 
