@@ -9,7 +9,7 @@ import android.test.AndroidTestCase;
 public class TestMovieContract extends AndroidTestCase {
     public void testGetIdFromUri() {
         long id = 1234;
-        Uri uri = MoviesContract.buildMovieIdUri(id);
+        Uri uri = MoviesContract.MovieEntry.buildMovieIdUri(id);
         long resId = MoviesContract.getIdFromUri(uri);
         assertEquals("resId was different from original: " + resId, id, resId);
     }

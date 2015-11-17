@@ -14,7 +14,7 @@ public class TestProvider extends AndroidTestCase {
 
     public void testQueryMovieList() {
         Cursor movieCursor = mContext.getContentResolver().query(
-                MoviesContract.CONTENT_URI,
+                MoviesContract.MovieEntry.CONTENT_URI,
                 null,
                 null,
                 null,
@@ -25,15 +25,17 @@ public class TestProvider extends AndroidTestCase {
 
     public void testQueryMovieById() {
         Cursor movieIdCursor = mContext.getContentResolver().query(
-                MoviesContract.buildMovieIdUri(135397), // Jurassic World!
+                MoviesContract.MovieEntry.buildMovieIdUri(135397), // Jurassic World!
                 null,
                 null,
                 null,
                 null
         );
         assertTrue("Cursor was empty", movieIdCursor.moveToFirst());
-        assertTrue("Movie name was wrong. Got " + movieIdCursor.getString(0) +
+        final String title = movieIdCursor.getString(
+                movieIdCursor.getColumnIndex(MoviesContract.MovieEntry.COLUMN_MOVIE_TITLE));
+        assertTrue("Movie name was wrong. Got " + title +
                 ", expected Jurassic World.",
-                movieIdCursor.getString(0).equals("Jurassic World"));
+                title.equals("Jurassic World"));
     }
 }
