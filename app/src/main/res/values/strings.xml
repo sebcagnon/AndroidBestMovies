@@ -13,9 +13,13 @@
         <item>By Highest Ratings</item>
     </array>
     <array name="pref_search_values" translatable="false">
-        <item>popularity.desc</item>
-        <item>vote_average.desc</item>
+        <item>@string/pref_search_popularity</item>
+        <item>@string/pref_search_vote_average</item>
     </array>
+    <string name="pref_search_popularity" translatable="false">popularity.desc</string>
+    <string name="pref_search_vote_average" translatable="false">vote_average.desc</string>
     <string name="pref_search_default" translatable="false">popularity.desc</string>
+
+    <string name="content_authority" translatable="false">com.example.android.bestmovies.app</string>
 
 </resources>
