@@ -26,7 +26,7 @@ import java.net.URL;
 public final class MovieProvider extends ContentProvider {
     private static final String LOG_CAT = ContentProvider.class.getSimpleName();
 
-    private static final String[] defaultMoveProjection = new String[] {
+    private static final String[] DEFAULT_MOVIE_PROJECTION = new String[] {
                 MoviesContract.MovieEntry._ID,
                 MoviesContract.MovieEntry.COLUMN_MOVIE_ID,
                 MoviesContract.MovieEntry.COLUMN_MOVIE_TITLE,
@@ -34,10 +34,54 @@ public final class MovieProvider extends ContentProvider {
                 MoviesContract.MovieEntry.COLUMN_SCORE,
                 MoviesContract.MovieEntry.COLUMN_POSTER_URI,
                 MoviesContract.MovieEntry.COLUMN_DESC};
+    private static final String[] DEFAULT_REVIEW_PROJECTION = new String[] {
+            MoviesContract.ReviewEntry._ID,
+            MoviesContract.ReviewEntry.COLUMN_MOVIE_ID,
+            MoviesContract.ReviewEntry.COLUMN_AUTHOR,
+            MoviesContract.ReviewEntry.COLUMN_CONTENT
+    };
+
+    private static final UriMatcher sUriMatcher = buildUriMatcher();
+    static final int MOVIE = 100;
+    static final int MOVIE_ID = 101;
+    static final int REVIEW = 200;
+    static final int TRAILERS = 300;
 
     @Override
     public boolean onCreate() {
         return true;
+    }
+
+    private static Uri buildUri (String... paths) {
+        Uri.Builder builder = MoviesContract.BASE_CONTENT_URI.buildUpon();
+        for (String path: paths) {
+            builder.appendPath(path);
+        }
+        return builder.build();
+    }
+
+    static UriMatcher buildUriMatcher() {
+        UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+        uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_MOVIE, MOVIE);
+        uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_MOVIE + "/#", MOVIE_ID);
+        uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_REVIEW + "/#", REVIEW);
+        return uriMatcher;
+    }
+
+    @Nullable
+    @Override
+    public String getType(Uri uri) {
+        final int code = sUriMatcher.match(uri);
+        switch (code) {
+            case MOVIE:
+                return MoviesContract.MovieEntry.CONTENT_TYPE;
+            case MOVIE_ID:
+                return MoviesContract.MovieEntry.CONTENT_ITEM_TYPE;
+            case REVIEW:
+                return MoviesContract.ReviewEntry.CONTENT_TYPE;
+            default:
+                throw new UnsupportedOperationException("Unknown Uri: " + uri);
+        }
     }
 
     @Nullable
@@ -54,39 +98,9 @@ public final class MovieProvider extends ContentProvider {
                 retCursor = getMovieDetailsOnline(projection, uri);
                 return retCursor;
             }
-            default:
-                throw new UnsupportedOperationException("Unknown Uri: " + uri);
-        }
-    }
-
-    private static final UriMatcher sUriMatcher = buildUriMatcher();
-    static final int MOVIE = 100;
-    static final int MOVIE_ID = 101;
-
-    private static Uri buildUri (String... paths) {
-        Uri.Builder builder = MoviesContract.BASE_CONTENT_URI.buildUpon();
-        for (String path: paths) {
-            builder.appendPath(path);
-        }
-        return builder.build();
-    }
-
-    static UriMatcher buildUriMatcher() {
-        UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_MOVIE, MOVIE);
-        uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_MOVIE + "/#", MOVIE_ID);
-        return uriMatcher;
-    }
-
-    @Nullable
-    @Override
-    public String getType(Uri uri) {
-        final int code = sUriMatcher.match(uri);
-        switch (code) {
-            case MOVIE:
-                return MoviesContract.MovieEntry.CONTENT_TYPE;
-            case MOVIE_ID:
-                return MoviesContract.MovieEntry.CONTENT_ITEM_TYPE;
+            case REVIEW: {
+                return getReviewOnline(projection, uri);
+            }
             default:
                 throw new UnsupportedOperationException("Unknown Uri: " + uri);
         }
@@ -151,7 +165,7 @@ public final class MovieProvider extends ContentProvider {
     private Cursor getMovieListCursorFromJSON(String[] projection, String movieDataJSON)
             throws JSONException {
         if (projection==null) {
-            projection = defaultMoveProjection;
+            projection = DEFAULT_MOVIE_PROJECTION;
         }
         final String MDB_LIST = "results";
 
@@ -175,18 +189,7 @@ public final class MovieProvider extends ContentProvider {
                 }
             }
         }
-
         return cursor;
-    }
-
-    /**
-     * Simple InputStream to String found on StackOverflow
-     * @param is the input stream to convert
-     * @return the input stream accumulated into one string
-     */
-    private String convertStreamToString(InputStream is) {
-        java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
     }
 
     private Cursor getMovieDetailsOnline(String[] projection, Uri uri) {
@@ -229,7 +232,7 @@ public final class MovieProvider extends ContentProvider {
     private Cursor getMovieCursorFromJSON(String[] projection, String JSONData)
             throws JSONException {
         if (projection==null) {
-            projection = defaultMoveProjection;
+            projection = DEFAULT_MOVIE_PROJECTION;
         }
         JSONObject object = new JSONObject(JSONData);
 
@@ -245,5 +248,77 @@ public final class MovieProvider extends ContentProvider {
             }
         }
         return cursor;
+    }
+
+    private Cursor getReviewOnline(String[] projection, Uri uri) {
+        long id = MoviesContract.getIdFromUri(uri);
+        String targetUrl = MoviesContract.ReviewEntry.createAPIUrl(id).buildUpon()
+                .appendQueryParameter("api_key", Constants.MOVIEDB_API_KEY)
+                .build().toString();
+
+        HttpURLConnection urlConnection = null;
+
+        String reviewJSON;
+        try {
+            URL url = new URL(targetUrl);
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
+            urlConnection.connect();
+
+            InputStream inputStream = urlConnection.getInputStream();
+            if (inputStream == null) {
+                return null;
+            }
+            reviewJSON = convertStreamToString(inputStream);
+            try {
+                return getReviewCursorFromJSON(projection, reviewJSON);
+            } catch (JSONException e) {
+                Log.e(LOG_CAT, "JSON Conversion Error: " + e.toString(), e);
+                return null;
+            }
+        } catch (IOException e) {
+            Log.e(LOG_CAT, "IOError: " + e.toString(), e);
+            return null;
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+        }
+    }
+
+    private Cursor getReviewCursorFromJSON(String[] projection, String JSONData)
+            throws JSONException{
+        if (projection==null) {
+            projection = DEFAULT_REVIEW_PROJECTION;
+        }
+        String MDB_LIST = "results";
+        JSONArray reviewList = new JSONObject(JSONData).getJSONArray(MDB_LIST);
+        if (reviewList.length()==0) {
+            // no reviews, it must happen often
+            return null;
+        }
+        MatrixCursor cursor = new MatrixCursor(projection, reviewList.length());
+        for (int i=0; i<reviewList.length(); i++){
+            MatrixCursor.RowBuilder row = cursor.newRow();
+            JSONObject review = reviewList.getJSONObject(i);
+            for (String s: projection) {
+                if (s.equals(MoviesContract.ReviewEntry._ID)) {
+                    row.add(i);
+                } else {
+                    row.add(review.get(s));
+                }
+            }
+        }
+        return cursor;
+    }
+
+    /**
+     * Simple InputStream to String found on StackOverflow
+     * @param is the input stream to convert
+     * @return the input stream accumulated into one string
+     */
+    private String convertStreamToString(InputStream is) {
+        java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
     }
 }

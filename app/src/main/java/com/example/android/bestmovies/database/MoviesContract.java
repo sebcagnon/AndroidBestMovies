@@ -15,6 +15,7 @@ public class MoviesContract {
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + AUTHORITY);
 
     public static final String PATH_MOVIE = "movie";
+    public static final String PATH_REVIEW = "review";
 
 
 
@@ -69,8 +70,28 @@ public class MoviesContract {
                     .appendPath(posterPath.substring(1)) // remove leading "/"
                     .build().toString();
         }
+    }
 
+    public static final class ReviewEntry implements BaseColumns {
+        public static final String TABLE_NAME = "review";
 
+        // movie id (refers to MovieEntry.COLUMN_MOVIE_ID
+        public static final String COLUMN_MOVIE_ID = "id";
+        public static final String COLUMN_AUTHOR = "author";
+        public static final String COLUMN_CONTENT = "content";
 
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_REVIEW).build();
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + AUTHORITY + "/" + PATH_REVIEW;
+
+        public static Uri buildReviewUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri createAPIUrl(long id) {
+            return Uri.parse("https://api.themoviedb.org/3/movie/" + id + "/reviews");
+        }
     }
 }

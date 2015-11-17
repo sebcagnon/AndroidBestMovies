@@ -2,7 +2,6 @@ package com.example.android.bestmovies.database;
 
 import android.database.Cursor;
 import android.test.AndroidTestCase;
-import android.util.Log;
 
 import com.example.android.bestmovies.R;
 
@@ -11,6 +10,8 @@ import com.example.android.bestmovies.R;
  */
 public class TestProvider extends AndroidTestCase {
     private static final String LOG_CAT = TestProvider.class.getSimpleName();
+
+    private static final long JURASSIC_WORLD_ID = 135397;
 
     public void testQueryMovieList() {
         Cursor movieCursor = mContext.getContentResolver().query(
@@ -25,7 +26,7 @@ public class TestProvider extends AndroidTestCase {
 
     public void testQueryMovieById() {
         Cursor movieIdCursor = mContext.getContentResolver().query(
-                MoviesContract.MovieEntry.buildMovieIdUri(135397), // Jurassic World!
+                MoviesContract.MovieEntry.buildMovieIdUri(JURASSIC_WORLD_ID),
                 null,
                 null,
                 null,
@@ -37,5 +38,13 @@ public class TestProvider extends AndroidTestCase {
         assertTrue("Movie name was wrong. Got " + title +
                 ", expected Jurassic World.",
                 title.equals("Jurassic World"));
+    }
+
+    public void testQueryReview() {
+        Cursor reviewCursor = mContext.getContentResolver().query(
+                MoviesContract.ReviewEntry.buildReviewUri(JURASSIC_WORLD_ID),
+                null, null, null, null);
+        assertTrue("Cursor was empty", reviewCursor.moveToFirst());
+        assertTrue("There should be several reviews here!", reviewCursor.getCount()>1);
     }
 }
