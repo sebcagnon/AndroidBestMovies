@@ -4,12 +4,12 @@
     android:layout_height="match_parent"
     tools:context="com.example.android.bestmovies.MovieGridFragment">
 
-    <GridView
+    <in.srain.cube.views.GridViewWithHeaderAndFooter
         android:id="@+id/movie_gridview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:numColumns="auto_fit"
         android:stretchMode="columnWidth"
-        android:gravity="center"></GridView>
+        android:gravity="center"/>
 
 </FrameLayout>
