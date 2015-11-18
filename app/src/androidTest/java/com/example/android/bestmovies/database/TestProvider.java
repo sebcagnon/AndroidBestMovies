@@ -22,6 +22,12 @@ public class TestProvider extends AndroidTestCase {
                 mContext.getString(R.string.pref_search_popularity)
         );
         assertTrue("There were no data returned by cursor", movieCursor.getCount()==20);
+        // testing with start page
+        Cursor page2 = mContext.getContentResolver().query(
+                MoviesContract.MovieEntry.buildMovieListWithStartPageUri(2),
+                null, null, null,
+                mContext.getString(R.string.pref_search_popularity));
+        assertTrue("There were no data returned by cursor for page 2", page2.getCount()==20);
     }
 
     public void testQueryMovieById() {

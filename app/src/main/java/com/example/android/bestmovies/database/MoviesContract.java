@@ -24,6 +24,7 @@ public class MoviesContract {
 
     public static final class MovieEntry implements BaseColumns {
         public static final String TABLE_NAME = "movie";
+        public static final String START_PAGE = "startPage";
 
         // id for moviedbUri
         public static final String COLUMN_MOVIE_ID = "id";
@@ -53,6 +54,23 @@ public class MoviesContract {
 
         public static Uri buildMovieIdUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri buildMovieListWithStartPageUri(int startPage) {
+            return CONTENT_URI.buildUpon()
+                    .appendPath(START_PAGE)
+                    .appendPath(Integer.toString(startPage))
+                    .build();
+        }
+
+        /*
+        Retrieve Id from uri AND bound it to acceptable range
+         */
+        public static long getPageNumberFromId(Uri uri) {
+            long id = ContentUris.parseId(uri);
+            if (id<1) return 1;
+            if (id>1000) return 1000;
+            return id;
         }
 
         /**

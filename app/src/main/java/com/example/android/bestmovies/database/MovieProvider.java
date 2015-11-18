@@ -48,6 +48,7 @@ public final class MovieProvider extends ContentProvider {
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     static final int MOVIE = 100;
     static final int MOVIE_ID = 101;
+    static final int MOVIE_START_PAGE = 102;
     static final int REVIEW = 200;
     static final int TRAILERS = 300;
 
@@ -68,6 +69,9 @@ public final class MovieProvider extends ContentProvider {
         UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_MOVIE, MOVIE);
         uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_MOVIE + "/#", MOVIE_ID);
+        uriMatcher.addURI(MoviesContract.AUTHORITY,
+                MoviesContract.PATH_MOVIE + "/" + MoviesContract.MovieEntry.START_PAGE + "/#",
+                MOVIE_START_PAGE);
         uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_REVIEW + "/#", REVIEW);
         uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_TRAILER + "/#", TRAILERS);
         return uriMatcher;
@@ -82,6 +86,8 @@ public final class MovieProvider extends ContentProvider {
                 return MoviesContract.MovieEntry.CONTENT_TYPE;
             case MOVIE_ID:
                 return MoviesContract.MovieEntry.CONTENT_ITEM_TYPE;
+            case MOVIE_START_PAGE:
+                return MoviesContract.MovieEntry.CONTENT_TYPE;
             case REVIEW:
                 return MoviesContract.ReviewEntry.CONTENT_TYPE;
             case TRAILERS:
@@ -96,6 +102,7 @@ public final class MovieProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
                         String sortOrder) {
         Cursor retCursor;
+        int match = sUriMatcher.match(uri);
         switch (sUriMatcher.match(uri)){
             case MOVIE: {
                 retCursor = getMoviesList(projection, sortOrder);
@@ -104,6 +111,10 @@ public final class MovieProvider extends ContentProvider {
             case MOVIE_ID: {
                 retCursor = getMovieDetailsOnline(projection, uri);
                 return retCursor;
+            }
+            case MOVIE_START_PAGE: {
+                long startPage = MoviesContract.MovieEntry.getPageNumberFromId(uri);
+                return getMoviesList(projection, sortOrder, startPage);
             }
             case REVIEW: {
                 return getReviewOnline(projection, uri);
@@ -133,8 +144,13 @@ public final class MovieProvider extends ContentProvider {
     }
 
     private Cursor getMoviesList(String[] projection, String sortOrder) {
+        return getMoviesList(projection, sortOrder, 1);
+    }
+
+    private Cursor getMoviesList(String[] projection, String sortOrder, long startPage) {
         String targetUrl = MoviesContract.MovieEntry.MOVIE_SEARCH_URL.buildUpon()
                 .appendQueryParameter("sort_by", sortOrder)
+                .appendQueryParameter("page", Long.toString(startPage))
                 .appendQueryParameter("api_key", Constants.MOVIEDB_API_KEY).build().toString();
         HttpURLConnection urlConnection = null;
 
