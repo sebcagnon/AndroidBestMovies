@@ -16,8 +16,7 @@ public class MoviesContract {
 
     public static final String PATH_MOVIE = "movie";
     public static final String PATH_REVIEW = "review";
-
-
+    public static final String PATH_TRAILER = "trailer";
 
     public static long getIdFromUri(Uri uri){
         return Long.parseLong(uri.getPathSegments().get(1));
@@ -92,6 +91,28 @@ public class MoviesContract {
 
         public static Uri createAPIUrl(long id) {
             return Uri.parse("https://api.themoviedb.org/3/movie/" + id + "/reviews");
+        }
+    }
+
+    public static final class TrailerEntry implements BaseColumns {
+        public static final String TABLE_NAME = "review";
+
+        public static final String COLUMN_MOVIE_ID = "id";
+        public static final String COLUMN_YOUTUBE_ID = "source";
+        public static final String COLUMN_TITLE = "name";
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_TRAILER).build();
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + AUTHORITY + "/" + PATH_REVIEW;
+
+        public static Uri buildTrailerUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri createAPIUrl(long id) {
+            return Uri.parse("https://api.themoviedb.org/3/movie/" + id + "/trailers");
         }
     }
 }

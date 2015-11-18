@@ -47,4 +47,12 @@ public class TestProvider extends AndroidTestCase {
         assertTrue("Cursor was empty", reviewCursor.moveToFirst());
         assertTrue("There should be several reviews here!", reviewCursor.getCount()>1);
     }
+
+    public void testQueryTrailers() {
+        Cursor trailersCursor = mContext.getContentResolver().query(
+                MoviesContract.TrailerEntry.buildTrailerUri(JURASSIC_WORLD_ID),
+                null, null, null, null);
+        assertTrue("Cursor was empty", trailersCursor.moveToFirst());
+        assertTrue("There should be several trailers here!", trailersCursor.getCount()>1);
+    }
 }

@@ -9,8 +9,6 @@ import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.example.android.bestmovies.Constants;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,7 +24,7 @@ import java.net.URL;
 public final class MovieProvider extends ContentProvider {
     private static final String LOG_CAT = ContentProvider.class.getSimpleName();
 
-    private static final String[] DEFAULT_MOVIE_PROJECTION = new String[] {
+    public static final String[] DEFAULT_MOVIE_PROJECTION = new String[] {
                 MoviesContract.MovieEntry._ID,
                 MoviesContract.MovieEntry.COLUMN_MOVIE_ID,
                 MoviesContract.MovieEntry.COLUMN_MOVIE_TITLE,
@@ -34,11 +32,17 @@ public final class MovieProvider extends ContentProvider {
                 MoviesContract.MovieEntry.COLUMN_SCORE,
                 MoviesContract.MovieEntry.COLUMN_POSTER_URI,
                 MoviesContract.MovieEntry.COLUMN_DESC};
-    private static final String[] DEFAULT_REVIEW_PROJECTION = new String[] {
+    public static final String[] DEFAULT_REVIEW_PROJECTION = new String[] {
             MoviesContract.ReviewEntry._ID,
             MoviesContract.ReviewEntry.COLUMN_MOVIE_ID,
             MoviesContract.ReviewEntry.COLUMN_AUTHOR,
             MoviesContract.ReviewEntry.COLUMN_CONTENT
+    };
+    public static final String[] DEFAULT_TRAILERS_PROJECTION = new String[] {
+            MoviesContract.TrailerEntry._ID,
+            MoviesContract.TrailerEntry.COLUMN_MOVIE_ID,
+            MoviesContract.TrailerEntry.COLUMN_TITLE,
+            MoviesContract.TrailerEntry.COLUMN_YOUTUBE_ID
     };
 
     private static final UriMatcher sUriMatcher = buildUriMatcher();
@@ -65,6 +69,7 @@ public final class MovieProvider extends ContentProvider {
         uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_MOVIE, MOVIE);
         uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_MOVIE + "/#", MOVIE_ID);
         uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_REVIEW + "/#", REVIEW);
+        uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_TRAILER + "/#", TRAILERS);
         return uriMatcher;
     }
 
@@ -79,6 +84,8 @@ public final class MovieProvider extends ContentProvider {
                 return MoviesContract.MovieEntry.CONTENT_ITEM_TYPE;
             case REVIEW:
                 return MoviesContract.ReviewEntry.CONTENT_TYPE;
+            case TRAILERS:
+                return MoviesContract.TrailerEntry.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown Uri: " + uri);
         }
@@ -100,6 +107,9 @@ public final class MovieProvider extends ContentProvider {
             }
             case REVIEW: {
                 return getReviewOnline(projection, uri);
+            }
+            case TRAILERS: {
+                return getTrailersOnline(projection, uri);
             }
             default:
                 throw new UnsupportedOperationException("Unknown Uri: " + uri);
@@ -306,6 +316,74 @@ public final class MovieProvider extends ContentProvider {
                     row.add(i);
                 } else {
                     row.add(review.get(s));
+                }
+            }
+        }
+        return cursor;
+    }
+
+    private Cursor getTrailersOnline(String[] projection, Uri uri) {
+        long id = MoviesContract.getIdFromUri(uri);
+        String targetUrl = MoviesContract.TrailerEntry.createAPIUrl(id).buildUpon()
+                .appendQueryParameter("api_key", Constants.MOVIEDB_API_KEY)
+                .build().toString();
+        HttpURLConnection urlConnection = null;
+
+        String reviewJSON;
+        try {
+            URL url = new URL(targetUrl);
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
+            urlConnection.connect();
+
+            InputStream inputStream = urlConnection.getInputStream();
+            if (inputStream == null) {
+                return null;
+            }
+            reviewJSON = convertStreamToString(inputStream);
+            try {
+                return getTrailersCursorFromJSON(projection, reviewJSON);
+            } catch (JSONException e) {
+                Log.e(LOG_CAT, "JSON Conversion Error: " + e.toString(), e);
+                return null;
+            }
+        } catch (IOException e) {
+            Log.e(LOG_CAT, "IOError: " + e.toString(), e);
+            return null;
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+        }
+    }
+
+    private Cursor getTrailersCursorFromJSON(String[] projection, String JSONData)
+            throws JSONException{
+        if (projection==null) {
+            projection = DEFAULT_TRAILERS_PROJECTION;
+        }
+        String MDB_LIST = "youtube";
+        JSONObject response = new JSONObject(JSONData);
+        JSONArray trailersList = response.getJSONArray(MDB_LIST);
+        if (trailersList.length()==0) {
+            // no reviews, it must happen often
+            return null;
+        }
+        MatrixCursor cursor = new MatrixCursor(projection, trailersList.length());
+        for (int i=0; i<trailersList.length(); i++){
+            MatrixCursor.RowBuilder row = cursor.newRow();
+            JSONObject trailer = trailersList.getJSONObject(i);
+            for (String s: projection) {
+                switch (s) {
+                    case MoviesContract.TrailerEntry._ID:
+                        row.add(i);
+                        break;
+                    case MoviesContract.TrailerEntry.COLUMN_MOVIE_ID:
+                        row.add(response.getString(MoviesContract.TrailerEntry.COLUMN_MOVIE_ID));
+                        break;
+                    default:
+                        row.add(trailer.get(s));
+                        break;
                 }
             }
         }
