@@ -9,13 +9,13 @@ Udacity Developing Android App Course Project
 
 # Setting MovieDB API key
 
-To use your MovieDB API key, please add Constants.java file, defined as followed:
+To use your MovieDB API key, please add Constants.java next to the MovieProvider file, defined as followed:
 
 ```java
-package com.example.android.bestmovies;
+package com.example.android.bestmovies.database;
 
-public class Constants {
-    public static final String MOVIEDB_API_KEY = <YOUR_API_KEY_HERE>;
+class Constants {
+    static final String MOVIEDB_API_KEY = <YOUR_API_KEY_HERE>;
 }
 ```
 
