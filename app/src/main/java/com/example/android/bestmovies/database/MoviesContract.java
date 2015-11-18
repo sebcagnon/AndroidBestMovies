@@ -113,7 +113,7 @@ public class MoviesContract {
     }
 
     public static final class TrailerEntry implements BaseColumns {
-        public static final String TABLE_NAME = "review";
+        public static final String TABLE_NAME = "trailer";
 
         public static final String COLUMN_MOVIE_ID = "movie_id";
         public static final String COLUMN_YOUTUBE_ID = "source";
