@@ -4,8 +4,8 @@ Udacity Developing Android App Course Project
 
 # TODO
 
-* create detailed view for movies
-* create settings for sorting
+* create Favorites database
+* create Tablet UI
 
 # Setting MovieDB API key
 
