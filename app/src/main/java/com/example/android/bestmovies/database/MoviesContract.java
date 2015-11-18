@@ -114,5 +114,15 @@ public class MoviesContract {
         public static Uri createAPIUrl(long id) {
             return Uri.parse("https://api.themoviedb.org/3/movie/" + id + "/trailers");
         }
+
+        /**
+         * Creates a basic Youtube uri for action view
+         * @param youtubeID the video Id ex: "dQw4w9WgXcQ"
+         * @return "http://www.youtube.com/watch?v=dQw4w9WgXcQ" as Uri
+         */
+        public static Uri createYoutubeUrl(String youtubeID) {
+            return Uri.parse("http://www.youtube.com/watch").buildUpon()
+                    .appendQueryParameter("v", youtubeID).build();
+        }
     }
 }

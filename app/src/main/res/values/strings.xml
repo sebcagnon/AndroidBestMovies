@@ -6,6 +6,9 @@
 
     <string name="review_section_title">Review</string>
     <string name="review_noreviews_message">No reviews available</string>
+    <string name="trailers_section_title">Trailers</string>
+    <string name="trailers_notrailers_message">No trailers available</string>
+    <string name="trailers_play_content_desc">Play this trailer</string>
 
     <!-- Strings related to Settings -->
     <string name="pref_search_title">Search Preference</string>
