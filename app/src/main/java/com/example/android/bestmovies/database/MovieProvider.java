@@ -318,7 +318,9 @@ public final class MovieProvider extends ContentProvider {
             projection = DEFAULT_REVIEW_PROJECTION;
         }
         String MDB_LIST = "results";
-        JSONArray reviewList = new JSONObject(JSONData).getJSONArray(MDB_LIST);
+        String MDB_MOVIE_ID = "id";
+        JSONObject response = new JSONObject(JSONData);
+        JSONArray reviewList = response.getJSONArray(MDB_LIST);
         if (reviewList.length()==0) {
             // no reviews, it must happen often
             return null;
@@ -330,6 +332,8 @@ public final class MovieProvider extends ContentProvider {
             for (String s: projection) {
                 if (s.equals(MoviesContract.ReviewEntry._ID)) {
                     row.add(i);
+                } else if (s.equals(MoviesContract.ReviewEntry.COLUMN_MOVIE_ID)) {
+                    row.add(response.get(MDB_MOVIE_ID));
                 } else {
                     row.add(review.get(s));
                 }
@@ -379,6 +383,7 @@ public final class MovieProvider extends ContentProvider {
             projection = DEFAULT_TRAILERS_PROJECTION;
         }
         String MDB_LIST = "youtube";
+        String MDB_MOVIE_ID = "id";
         JSONObject response = new JSONObject(JSONData);
         JSONArray trailersList = response.getJSONArray(MDB_LIST);
         if (trailersList.length()==0) {
@@ -395,7 +400,7 @@ public final class MovieProvider extends ContentProvider {
                         row.add(i);
                         break;
                     case MoviesContract.TrailerEntry.COLUMN_MOVIE_ID:
-                        row.add(response.getString(MoviesContract.TrailerEntry.COLUMN_MOVIE_ID));
+                        row.add(response.getString(MDB_MOVIE_ID));
                         break;
                     default:
                         row.add(trailer.get(s));
