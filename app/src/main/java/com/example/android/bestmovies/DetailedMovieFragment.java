@@ -1,6 +1,8 @@
 package com.example.android.bestmovies;
 
 
+import android.content.AsyncQueryHandler;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -78,8 +80,11 @@ public class DetailedMovieFragment extends Fragment
     private int mFinishedLoaders = 0;
     private int mIsFavorite;
     private MenuItem mFavoriteMenuItem;
-    private ArrayList<ContentValues> mReviewValues;
-    private ArrayList<ContentValues> mTrailerValues;
+    private static ArrayList<ContentValues> mReviewValues;
+    private static ArrayList<ContentValues> mTrailerValues;
+    private static final int MOVIE_INSERT_TOKEN = 1;
+    private static final int OTHER_HANDLER_TOKEN = 2;
+    private MovieProviderHandler mHandler;
 
     public DetailedMovieFragment() { setHasOptionsMenu(true); }
 
@@ -96,6 +101,7 @@ public class DetailedMovieFragment extends Fragment
             posterImageView = (ImageView) rootView.findViewById(R.id.poster_imageview);
             descTextView = (TextView)rootView.findViewById(R.id.desc_textview);
         }
+        mHandler = new MovieProviderHandler(getContext().getContentResolver());
         return rootView;
     }
 
@@ -272,19 +278,10 @@ public class DetailedMovieFragment extends Fragment
         movieValues.put(MoviesContract.MovieEntry.COLUMN_SCORE, scoreTextView.getText().toString());
         movieValues.put(MoviesContract.MovieEntry.COLUMN_DESC, descTextView.getText().toString());
         movieValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_URI, mPosterUrl);
-        Uri movieUri = getContext().getContentResolver().insert(
+
+        mHandler.startInsert(MOVIE_INSERT_TOKEN, null,
                 MoviesContract.MovieEntry.CONTENT_URI, movieValues);
-        if (!(ContentUris.parseId(movieUri)>0)) {
-            return;
-        }
-        if (!mReviewValues.isEmpty()) {
-            getContext().getContentResolver().bulkInsert(MoviesContract.ReviewEntry.CONTENT_URI,
-                    mReviewValues.toArray(new ContentValues[mReviewValues.size()]));
-        }
-        if (!mTrailerValues.isEmpty()) {
-            getContext().getContentResolver().bulkInsert(MoviesContract.TrailerEntry.CONTENT_URI,
-                    mTrailerValues.toArray(new ContentValues[mTrailerValues.size()]));
-        }
+
     }
 
     private void deleteMovieFromFavorites() {
@@ -292,11 +289,37 @@ public class DetailedMovieFragment extends Fragment
         String selectionTrailer = MoviesContract.TrailerEntry.COLUMN_MOVIE_ID + "=?";
         String selectionMovie = MoviesContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
         String[] selectionArgs = new String[] { Long.toString(movieId) };
-        getContext().getContentResolver().delete(
+        mHandler.startDelete(OTHER_HANDLER_TOKEN, null,
                 MoviesContract.ReviewEntry.CONTENT_URI, selectionReview, selectionArgs);
-        getContext().getContentResolver().delete(
+        mHandler.startDelete(OTHER_HANDLER_TOKEN, null,
                 MoviesContract.TrailerEntry.CONTENT_URI, selectionTrailer, selectionArgs);
-        getContext().getContentResolver().delete(
+        mHandler.startDelete(OTHER_HANDLER_TOKEN, null,
                 MoviesContract.MovieEntry.CONTENT_URI, selectionMovie, selectionArgs);
+    }
+
+    private static class MovieProviderHandler extends AsyncQueryHandler {
+        public MovieProviderHandler(ContentResolver cr) {
+            super(cr);
+        }
+
+        @Override
+        protected void onInsertComplete(int token, Object cookie, Uri uri) {
+            super.onInsertComplete(token, cookie, uri);
+            if (token!=MOVIE_INSERT_TOKEN)
+                return;
+            if (!(ContentUris.parseId(uri)>0)) {
+                return;
+            }
+            if (!mReviewValues.isEmpty()) {
+                for (ContentValues review: mReviewValues)
+                    this.startInsert(OTHER_HANDLER_TOKEN, null,
+                            MoviesContract.ReviewEntry.CONTENT_URI, review);
+            }
+            if (!mTrailerValues.isEmpty()) {
+                for (ContentValues trailer: mTrailerValues)
+                    this.startInsert(OTHER_HANDLER_TOKEN, null,
+                            MoviesContract.TrailerEntry.CONTENT_URI, trailer);
+            }
+        }
     }
 }

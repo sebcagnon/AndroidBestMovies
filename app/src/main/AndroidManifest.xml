@@ -25,9 +25,18 @@
         <activity android:name=".DetailedMovieActivity" >
         </activity>
         <provider
-            android:authorities="@string/content_authority"
+            android:authorities="com.example.android.bestmovies.database.MovieProvider"
             android:name=".database.MovieProvider"
             android:exported="false">
+        </provider>
+        <provider
+            android:authorities="com.example.android.bestmovies.database.ImageProvider"
+            android:name="android.support.v4.content.FileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
         </provider>
     </application>
 

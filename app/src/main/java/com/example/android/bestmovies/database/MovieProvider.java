@@ -13,6 +13,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.support.annotation.Nullable;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 
 import com.example.android.bestmovies.R;
@@ -21,6 +22,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -208,6 +211,10 @@ public final class MovieProvider extends ContentProvider {
 
         switch (match) {
             case MOVIE: {
+                String imageUrl = values.getAsString(MoviesContract.MovieEntry.COLUMN_POSTER_URI);
+                int movieId = values.getAsInteger(MoviesContract.MovieEntry.COLUMN_MOVIE_ID);
+                imageUrl = saveImageToLocalStorage(imageUrl, movieId);
+                values.put(MoviesContract.MovieEntry.COLUMN_POSTER_URI, imageUrl);
                 long _id = db.insert(MoviesContract.MovieEntry.TABLE_NAME, null, values);
                 if (_id>0)
                     returnUri = MoviesContract.MovieEntry.buildMovieIdUri(_id);
@@ -249,6 +256,10 @@ public final class MovieProvider extends ContentProvider {
         switch (match) {
             case MOVIE: {
                 tableName = MoviesContract.MovieEntry.TABLE_NAME;
+                Cursor willBeDeleted = db.query(tableName,
+                        new String[]{MoviesContract.MovieEntry.COLUMN_MOVIE_ID},
+                        selection, selectionArgs, null, null, null);
+                deleteImageFromFile(willBeDeleted);
                 break;
             }
             case REVIEW: {
@@ -563,5 +574,72 @@ public final class MovieProvider extends ContentProvider {
     private String convertStreamToString(InputStream is) {
         java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";
+    }
+
+    /**
+     * Downloads image and writes to file in FileProvider folder
+     * @param imageUrl the url on themovieDB servers
+     * @param movieId  the id of the movie this image refers to
+     * @return a content uri if successful, otherwise catches errors and returns original url
+     */
+    public String saveImageToLocalStorage(String imageUrl, int movieId) {
+        if (getContext()==null)
+            return imageUrl;
+        final File folderName = new File(getContext().getFilesDir(),
+                getContext().getString(R.string.provider_paths_path));
+        if (!folderName.exists() && !folderName.mkdirs()) {
+            Log.e(LOG_CAT, "Could not create poster image directory");
+            return imageUrl;
+        }
+        final File outputName = new File(folderName, movieId + ".jpg");
+        URL url;
+        try {
+            url = new URL(imageUrl);
+        } catch (IOException e) {
+            Log.e(LOG_CAT, "Could not create url: " + e);
+            return imageUrl;
+        }
+        InputStream input = null;
+        FileOutputStream output = null;
+
+        try {
+            input = url.openConnection().getInputStream();
+            output = new FileOutputStream(outputName);
+            int read;
+            byte[] data = new byte[1024];
+            while ((read = input.read(data)) != -1)
+                output.write(data, 0, read);
+
+            return FileProvider.getUriForFile(getContext(), MoviesContract.IMAGE_AUTHORITY,
+                    outputName).toString();
+        } catch (IOException e) {
+            Log.e(LOG_CAT, "Could not write into file: " + e);
+            return imageUrl;
+        } finally {
+            try {
+                if (output!=null)
+                    output.close();
+            } catch (IOException e) {
+                //ignore
+            }
+            try {
+                if (input!=null)
+                    input.close();
+            } catch (IOException e) {
+                //ignore
+            }
+        }
+    }
+
+    public void deleteImageFromFile(Cursor cursor) {
+        if (getContext()==null || cursor==null || !cursor.moveToFirst())
+            return;
+        for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+            String imageName = cursor.getString(0) + ".jpg";
+            final File folderName = new File(getContext().getFilesDir().getAbsolutePath(),
+                    getContext().getString(R.string.provider_paths_path));
+            final File fileName = new File(folderName, imageName);
+            boolean deleted = fileName.delete();
+        }
     }
 }

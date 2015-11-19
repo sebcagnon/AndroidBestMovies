@@ -32,6 +32,7 @@
     <string name="pref_search_favorite" translatable="false">favorite</string>
     <string name="pref_search_default" translatable="false">popularity.desc</string>
 
-    <string name="content_authority" translatable="false">com.example.android.bestmovies.app</string>
+    <string name="provider_paths_name">images</string>
+    <string name="provider_paths_path">poster_images/</string>
 
 </resources>

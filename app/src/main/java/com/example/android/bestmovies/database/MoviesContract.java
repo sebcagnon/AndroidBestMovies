@@ -11,12 +11,14 @@ import com.example.android.bestmovies.R;
  * Created by Sebastien Cagnon on 11/16/15.
  */
 public class MoviesContract {
-    public static final String AUTHORITY = "com.example.android.bestmovies.app";
+    public static final String AUTHORITY = "com.example.android.bestmovies.database.MovieProvider";
+    public static final String IMAGE_AUTHORITY = "com.example.android.bestmovies.database.ImageProvider";
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + AUTHORITY);
 
     public static final String PATH_MOVIE = "movie";
     public static final String PATH_REVIEW = "review";
     public static final String PATH_TRAILER = "trailer";
+    public static final String PATH_IMAGE = "images";
 
     public static long getIdFromUri(Uri uri){
         return Long.parseLong(uri.getPathSegments().get(1));
