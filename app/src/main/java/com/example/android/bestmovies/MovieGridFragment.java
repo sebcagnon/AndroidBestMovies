@@ -38,11 +38,13 @@ public class MovieGridFragment extends Fragment
     private static final String[] projection = new String[] {
             MoviesContract.MovieEntry._ID,
             MoviesContract.MovieEntry.COLUMN_MOVIE_ID,
-            MoviesContract.MovieEntry.COLUMN_POSTER_URI
+            MoviesContract.MovieEntry.COLUMN_POSTER_URI,
+            MoviesContract.MovieEntry.COLUMN_MOVIE_TITLE
     };
     public static final int MOVIE_ID_COLUMN = 0; // used by CursorAdapter
     public static final int MOVIE_API_ID_COLUMN = 1;
     public static final int MOVIE_POSTER_URI_COLUMN = 2;
+    public static final int MOVIE_TITLE_COLUMN = 3;
 
     public MovieGridFragment() {
     }
@@ -68,9 +70,11 @@ public class MovieGridFragment extends Fragment
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 int viewId = view.getId();
                 if (viewId == R.id.grid_item_thumbnail_imageview) {
-                    MovieGridAdapter.ViewHolder viewHolder = (MovieGridAdapter.ViewHolder) view.getTag();
+                    MovieGridAdapter.ViewHolder viewHolder =
+                            (MovieGridAdapter.ViewHolder) view.getTag();
                     long movieId = viewHolder.id;
-                    Intent detailedMovieActivity = new Intent(getActivity(), DetailedMovieActivity.class);
+                    Intent detailedMovieActivity =
+                            new Intent(getActivity(), DetailedMovieActivity.class);
                     detailedMovieActivity.putExtra("movieId", movieId);
                     startActivity(detailedMovieActivity);
                 } else {
