@@ -17,7 +17,7 @@ import com.example.android.bestmovies.database.MoviesContract.TrailerEntry;
  */
 public class MovieDbHelper extends SQLiteOpenHelper {
 
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
 
     static final String DATABASE_NAME = "movie.db";
 
@@ -34,7 +34,8 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieEntry.COLUMN_RELEASE + " TEXT NOT NULL," +
                 MovieEntry.COLUMN_SCORE + " REAL NOT NULL," +
                 MovieEntry.COLUMN_DESC + " TEXT NOT NULL," +
-                MovieEntry.COLUMN_POSTER_URI + " TEXT NOT NULL);";
+                MovieEntry.COLUMN_POSTER_URI + " TEXT NOT NULL," +
+                MovieEntry.COLUMN_FAVORITE + " INTEGER DEFAULT 1);";
 
         final String SQL_CREATE_REVIEW_TABLE = "CREATE TABLE " + ReviewEntry.TABLE_NAME + "(" +
                 ReviewEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -59,6 +60,12 @@ public class MovieDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // no version upgrade yet
+        if (oldVersion == 1) {
+            // version 1 was not in prod, so no harm done
+            db.execSQL("DROP TABLE IF EXISTS " + TrailerEntry.TABLE_NAME);
+            db.execSQL("DROP TABLE IF EXISTS " + ReviewEntry.TABLE_NAME);
+            db.execSQL("DROP TABLE IF EXISTS " + MovieEntry.TABLE_NAME);
+            onCreate(db);
+        }
     }
 }

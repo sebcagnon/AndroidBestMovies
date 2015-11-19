@@ -35,6 +35,7 @@ public class MoviesContract {
         public static final String COLUMN_DESC = "overview";
         // holds an API url or a content Uri for favorites
         public static final String COLUMN_POSTER_URI = "poster_path";
+        public static final String COLUMN_FAVORITE = "favorite";
 
         public static final Uri CONTENT_URI =
                 BASE_CONTENT_URI.buildUpon().appendPath(PATH_MOVIE).build();
