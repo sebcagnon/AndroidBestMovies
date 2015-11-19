@@ -3,11 +3,14 @@ package com.example.android.bestmovies.database;
 import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -117,12 +120,21 @@ public final class MovieProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
                         String sortOrder) {
         Cursor retCursor;
-        String favoritePref = getContext().getString(R.string.pref_search_favorite);
+        boolean isOnline = false;
+        String favoritePref = "";
+        if (getContext()!=null) {
+            favoritePref = getContext().getString(R.string.pref_search_favorite);
+            final ConnectivityManager conMgr = (ConnectivityManager) getContext()
+                    .getSystemService(Context.CONNECTIVITY_SERVICE);
+            final NetworkInfo activeNetwork = conMgr.getActiveNetworkInfo();
+            if (activeNetwork!=null && activeNetwork.isConnected())
+                isOnline = true;
+        }
+        SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         int match = sUriMatcher.match(uri);
         switch (sUriMatcher.match(uri)){
             case MOVIE: {
                 if (sortOrder!=null && sortOrder.equals(favoritePref)){
-                    SQLiteDatabase db = new MovieDbHelper(getContext()).getReadableDatabase();
                     retCursor = db.query(MoviesContract.MovieEntry.TABLE_NAME,
                             projection, selection, selectionArgs,
                             null, null, null);
@@ -136,7 +148,6 @@ public final class MovieProvider extends ContentProvider {
                 return retCursor;
             }
             case MOVIE_ID: {
-                SQLiteDatabase db = new MovieDbHelper(getContext()).getReadableDatabase();
                 long id = ContentUris.parseId(uri);
                 retCursor = db.query(MoviesContract.MovieEntry.TABLE_NAME, projection,
                         MoviesContract.MovieEntry.COLUMN_MOVIE_ID + "=?",
@@ -150,7 +161,6 @@ public final class MovieProvider extends ContentProvider {
                 String limitClause = String.valueOf((startPage - 1)*DEFAULT_ROW_COUNT) + ", " +
                         String.valueOf(startPage*DEFAULT_ROW_COUNT);
                 if (sortOrder!=null && sortOrder.equals(favoritePref)) {
-                    SQLiteDatabase db = new MovieDbHelper(getContext()).getReadableDatabase();
                     retCursor = db.query(MoviesContract.MovieEntry.TABLE_NAME,
                             projection, selection, selectionArgs, null, null, null, limitClause);
                 } else {
@@ -163,10 +173,26 @@ public final class MovieProvider extends ContentProvider {
                 return retCursor;
             }
             case REVIEW_ID: {
-                return getReviewOnline(projection, uri);
+                if (isOnline)
+                    return getReviewOnline(projection, uri);
+                else {
+                    String reviewSelection = MoviesContract.ReviewEntry.COLUMN_MOVIE_ID + "=?";
+                    String[] reviewSelectionArgs = new String[]
+                            {Long.toString(ContentUris.parseId(uri))};
+                    return db.query(MoviesContract.ReviewEntry.TABLE_NAME,
+                            projection, reviewSelection, reviewSelectionArgs, null, null, null);
+                }
             }
             case TRAILERS_ID: {
-                return getTrailersOnline(projection, uri);
+                if (isOnline)
+                    return getTrailersOnline(projection, uri);
+                else {
+                    String trailerSelection = MoviesContract.TrailerEntry.COLUMN_MOVIE_ID + "=?";
+                    String[] trailerSelectionArgs = new String[]
+                            {Long.toString(ContentUris.parseId(uri))};
+                    return db.query(MoviesContract.TrailerEntry.TABLE_NAME,
+                            projection, trailerSelection, trailerSelectionArgs, null, null, null);
+                }
             }
             default:
                 throw new UnsupportedOperationException("Unknown Uri: " + uri);

@@ -76,6 +76,7 @@ public class DetailedMovieFragment extends Fragment
     public static final int TRAILER_YOUTUBE_COLUMN = 1;
 
     private int mFinishedLoaders = 0;
+    private int mIsFavorite;
     private MenuItem mFavoriteMenuItem;
     private ArrayList<ContentValues> mReviewValues;
     private ArrayList<ContentValues> mTrailerValues;
@@ -169,10 +170,7 @@ public class DetailedMovieFragment extends Fragment
                     Picasso.with(getContext()).load(mPosterUrl)
                             .placeholder(R.drawable.placeholder).into(posterImageView);
                     descTextView.setText(data.getString(MOVIE_DESC_COLUMN));
-                    if (data.getInt(MOVIE_FAV_COLUMN)==1 && mFavoriteMenuItem!=null) {
-                        mFavoriteMenuItem.setIcon(R.drawable.ic_favorite_white_24dp)
-                                .setTitle(R.string.action_remove_favorite);
-                    }
+                    mIsFavorite = data.getInt(MOVIE_FAV_COLUMN);
                 }
                 break;
             }
@@ -250,6 +248,13 @@ public class DetailedMovieFragment extends Fragment
             }
         }
         if (mFinishedLoaders == 3 && mFavoriteMenuItem!=null) {
+            if (mIsFavorite==1) {
+                mFavoriteMenuItem.setIcon(R.drawable.ic_favorite_white_24dp)
+                        .setTitle(R.string.action_remove_favorite);
+            } else {
+                mFavoriteMenuItem.setIcon(R.drawable.ic_favorite_border_white_24dp)
+                        .setTitle(R.string.action_add_favorite);
+            }
             mFavoriteMenuItem.setEnabled(true);
         }
     }
