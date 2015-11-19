@@ -3,6 +3,8 @@
 
     <string name="action_settings">Settings</string>
     <string name="title_activity_settings">Settings</string>
+    <string name="action_add_favorite">Add to Favorites</string>
+    <string name="action_remove_favorite">Remove from Favorites</string>
 
     <string name="review_section_title">Review</string>
     <string name="review_noreviews_message">No reviews available</string>
@@ -18,13 +20,16 @@
     <array name="pref_search_entries">
         <item>By Popularity</item>
         <item>By Highest Ratings</item>
+        <item>By Favorites</item>
     </array>
     <array name="pref_search_values" translatable="false">
         <item>@string/pref_search_popularity</item>
         <item>@string/pref_search_vote_average</item>
+        <item>@string/pref_search_favorite</item>
     </array>
     <string name="pref_search_popularity" translatable="false">popularity.desc</string>
     <string name="pref_search_vote_average" translatable="false">vote_average.desc</string>
+    <string name="pref_search_favorite" translatable="false">favorite</string>
     <string name="pref_search_default" translatable="false">popularity.desc</string>
 
     <string name="content_authority" translatable="false">com.example.android.bestmovies.app</string>
